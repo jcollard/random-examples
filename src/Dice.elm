@@ -78,9 +78,8 @@ bar n rolls max_rolls =
                   ]
 
 -- Each time someone clicks, roll the dice.
-handleClick : Float -> State -> State
 handleClick _ state = roll state
 
 -- Basic wiring
 main : Signal Element
-main = display <~ (foldp handleClick initialState (fps 60))
+main = display <~ (foldp handleClick initialState Mouse.clicks)
