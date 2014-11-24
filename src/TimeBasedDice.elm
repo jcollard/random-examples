@@ -15,6 +15,8 @@ import Time
 import Array (Array)
 import Array
 
+import Maybe ((?), Maybe(Just, Nothing))
+
 -----------
 -- Model --
 -----------
@@ -64,17 +66,16 @@ seed = (\ t -> Just << Random.initialSeed <| round t) <~ startTime
 
 -- Although it type checks, this causes a run time error. Perhaps because the signals are recursive?
 
-startTime : Signal (Maybe Time)
-startTime = (\ (t,_) -> Just t) <~ (sampleOn (Time.every 100) (Time.timestamp <| constant ()))
+start = (\ (t,_) -> t) <~ (Time.timestamp <| constant ())
 
-timesFired : Signal Int
-timesFired = foldp (+) 0 (sampleOn startTime (constant 1))
+startTime : Signal (Maybe Time)
+startTime = (\ (t,_) -> Just t) <~ sampleOn (Time.fps 10) (Time.timestamp <| constant ())
 
 okayToSample : Int -> Bool
 okayToSample fired = fired < 2
 
 okay : Signal Bool
-okay = okayToSample <~ timesFired
+okay = okayToSample <~ (foldp (+) 0 (sampleOn startTime (constant 1)))
 
 seed : Signal (Maybe Random.Seed)
 seed = (\ t -> 
@@ -93,7 +94,7 @@ roll state =
     let (first_roll, seed') = Random.int 1 6 state.seed
         (second_roll, seed'') = Random.int 1 6 seed'
         ix = (first_roll + second_roll) - 2
-        curr = Array.getOrElse 0 ix state.rolls
+        curr = (Array.get ix state.rolls) ? 0
         rolls' = Array.set ix (curr + 1) state.rolls
     in { rolls = rolls', seed = seed'', lastRoll = (first_roll, second_roll) }
 
@@ -140,7 +141,7 @@ chart rolls =
     let maxRoll = Array.foldr max 0 rolls
     in if | maxRoll == 0 -> asText "No data, click to roll."
           | otherwise ->
-              let getRollBar n = bar n (Array.getOrElse 0 n rolls) maxRoll
+              let getRollBar n = bar n ((Array.get n rolls) ? 0) maxRoll
               in  flow right (List.map getRollBar [0..10])
 
 -- Draw a bar up to 100px tall based on how many times we've seen it
