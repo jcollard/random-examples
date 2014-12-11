@@ -18,7 +18,7 @@ seed =
 randomInteger : Int
 randomInteger = 
     -- Returns a pair, the first value is the generated value
-    let (n, _) = Random.int 0 100 seed
+    let (n, _) = Random.generate (Random.int 0 100) seed
     in n
 
 -- Generate a random Float between 0 and 1
@@ -26,7 +26,7 @@ randomInteger =
 randomFloat : Float
 randomFloat =
     -- Returns a pair, the first value is the generated value
-    let (f, _) = Random.float 0 1 seed
+    let (f, _) = Random.generate (Random.float 0 1) seed
     in f
 
 -- Generate a list of 20 random Ints between 0 an 100
@@ -34,7 +34,7 @@ randomFloat =
 randomList : (List Int)
 randomList = 
     -- Returns a pair, the first value is a generated value
-    let (ls, _) = Random.list 20 (Random.int 0 100) seed
+    let (ls, _) = Random.generate (Random.list 20 (Random.int 0 100)) seed
     in ls
 
 main : Element
