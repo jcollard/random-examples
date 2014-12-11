@@ -9,7 +9,7 @@ import List
 import Signal (Signal, foldp, (<~))
 import Mouse
 
-import Maybe ((?), Maybe (Just, Nothing))
+import Maybe (withDefault, Maybe (Just, Nothing))
 import Array (Array)
 import Array
 
@@ -20,11 +20,8 @@ import Array
 {-
   rolls - The different possible rolls (offset by 2) and the number of times
           it has been rolled
-
   seed - The seed to use to generate pseudo random numbers
-
   last_roll - The last roll that occurred.
-
 -}
 type alias State = { rolls : Array Int
                    , seed  : Random.Seed 
@@ -46,10 +43,10 @@ initialState = { rolls = Array.repeat 11 0
 -- Get two values between 1 and 6, sum them, and update the state
 roll : State -> State
 roll state =
-    let (first_roll, seed') = Random.int 1 6 state.seed
-        (second_roll, seed'') = Random.int 1 6 seed'
+    let (first_roll, seed') = Random.generate (Random.int 1 6) state.seed
+        (second_roll, seed'') = Random.generate (Random.int 1 6) seed'
         ix = (first_roll + second_roll) - 2
-        curr = (Array.get ix state.rolls) ? 0
+        curr = withDefault 0 (Array.get ix state.rolls)
         rolls' = Array.set ix (curr + 1) state.rolls
     in { rolls = rolls', seed = seed'', lastRoll = (first_roll, second_roll) }
 
@@ -86,7 +83,7 @@ chart rolls =
     let maxRoll = Array.foldr max 0 rolls
     in if | maxRoll == 0 -> asText "No data, click to roll."
           | otherwise ->
-              let getRollBar n = bar n ((Array.get n rolls) ? 0) maxRoll
+              let getRollBar n = bar n (withDefault 0 (Array.get n rolls)) maxRoll
               in  flow right (List.map getRollBar [0..10])
 
 -- Draw a bar up to 100px tall based on how many times we've seen it
@@ -100,4 +97,3 @@ bar n rolls max_rolls =
     in flow right [ flow down [label, theBar, total]
                   , spacer 1 1
                   ]
-
